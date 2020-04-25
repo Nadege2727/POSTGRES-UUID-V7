@@ -8,14 +8,14 @@ declare
 	v_byte   bit(8);
 	v_uuid   varchar;
 
-    v_time timestamp with time zone:= null;
+	v_time timestamp with time zone:= null;
 	v_secs bigint := null;
-    v_msec bigint := null;
+	v_msec bigint := null;
 	v_timestamp bigint := null;
-    v_timestamp_hex bytea := null;
+	v_timestamp_hex bytea := null;
 	v_timestamp_end char := null;
 
-    c_greg bigint := EXTRACT(EPOCH from '1582-10-15 00:00:00'::timestamp); -- Gragorian epoch
+	c_greg bigint := EXTRACT(EPOCH from '1582-10-15 00:00:00'::timestamp); -- Gragorian epoch
 	c_prime bigint := 2147483647; -- Mersenne prime (2^31 - 1)
 begin
 
