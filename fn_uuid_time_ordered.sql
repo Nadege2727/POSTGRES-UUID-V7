@@ -36,7 +36,7 @@ begin
 	v_timestamp_hex := substr(v_timestamp_hex, 2, 12) || '0' || substr(v_timestamp_hex, 14, 2) || v_timestamp_end;
 
 	-- Generate a random hexadecimal
-	v_md5 := md5(v_time::text || current_timestamp::text || v_rnd::text);
+	v_md5 := md5(v_time::text || v_rnd::text);
 
 	-- Concat timestemp hex with random hex
 	v_md5 := v_timestamp_hex || substr(v_md5, 1, 16);
