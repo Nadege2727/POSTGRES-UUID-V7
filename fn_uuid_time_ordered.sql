@@ -13,10 +13,8 @@ declare
 	v_msec bigint := null;
 	v_timestamp bigint := null;
 	v_timestamp_hex bytea := null;
-	v_timestamp_end char := null;
 
 	c_greg bigint := EXTRACT(EPOCH from '1582-10-15 00:00:00'::timestamp); -- Gragorian epoch
-	c_prime bigint := 2147483647; -- Mersenne prime (2^31 - 1)
 begin
 
 	-- Get time and random values
@@ -32,8 +30,7 @@ begin
 
 	-- Generate timestamp hexadecimal
 	v_timestamp_hex := lpad(to_hex(v_timestamp), 16, '0');
-	v_timestamp_end := to_hex(mod((v_rnd * c_prime)::numeric,15::numeric)::int); -- the last char is random
-	v_timestamp_hex := substr(v_timestamp_hex, 2, 12) || '0' || substr(v_timestamp_hex, 14, 2) || v_timestamp_end;
+	v_timestamp_hex := substr(v_timestamp_hex, 2, 12) || '0' || substr(v_timestamp_hex, 14, 3);
 
 	-- Generate a random hexadecimal
 	v_md5 := md5(v_time::text || v_rnd::text);
