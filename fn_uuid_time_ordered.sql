@@ -4,6 +4,8 @@
  * 
  * The multicast bit is set automatically in the node identifier.
  * 
+ * Tags: uuid guid uuid-generator guid-generator generator time order rfc4122 rfc-4122
+ *
  * @param p_node the node identifier (0 to 2^48)
  */
 create or replace function fn_uuid_time_ordered(p_node bigint) returns varchar as $$
@@ -80,6 +82,8 @@ end $$ language plpgsql;
 /**
  * Returns a time-ordered UUID (v6)
  * 
+ * Tags: uuid guid uuid-generator guid-generator generator time order rfc4122 rfc-4122
+ *
  * The node identifier is random and multicast.
  */
 create or replace function fn_uuid_time_ordered() returns varchar as $$
