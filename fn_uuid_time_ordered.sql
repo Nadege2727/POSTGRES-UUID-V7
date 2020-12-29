@@ -20,7 +20,7 @@ declare
 	v_secs bigint := null;
 	v_msec bigint := null;
 	v_timestamp bigint := null;
-	v_timestamp_hex bytea := null;
+	v_timestamp_hex varchar := null;
 	v_variant varchar;
 	v_node varchar;
 
