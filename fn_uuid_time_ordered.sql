@@ -75,7 +75,7 @@ begin
 	v_variant := encode(v_bytes, 'hex')::varchar;
 	v_md5 := overlay(v_md5 placing v_variant from 21);
 
-	return v_md5::uuid::varchar;
+	return v_md5;
 	
 end $$ language plpgsql;
 
