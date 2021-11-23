@@ -33,7 +33,7 @@ begin
 	v_timestamp_hex := substr(v_timestamp_hex, 2, 12) || '6' || substr(v_timestamp_hex, 14, 3);
 
 	-- Concat timestemp hex with random hex to generate a byte array
-	v_bytes := decode(v_timestamp_hex || substr(md5(v_time::text || random()::text), 1, 16), 'hex');
+	v_bytes := decode(substr(v_timestamp_hex || md5(random()::text), 1, 32), 'hex');
 
 	-- Set variant bits (10xx)
 	v_bytes := set_bit(v_bytes, 71, 1);
@@ -52,3 +52,4 @@ end $$ language plpgsql;
 -- |uuid                                  |time_taken        |
 -- |--------------------------------------|------------------|
 -- |1ec4c81e-ac69-61e0-8021-798ee3338c84  |00:00:00.000243   |
+
