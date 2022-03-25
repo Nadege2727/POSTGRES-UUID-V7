@@ -2,8 +2,6 @@
 /**
  * Returns a time-ordered UUID (v6).
  * 
- * The multicast bit is set automatically in the node identifier.
- * 
  * Tags: uuid guid uuid-generator guid-generator generator time order rfc4122 rfc-4122
  */
 create or replace function fn_uuid_time_ordered() returns uuid as $$
