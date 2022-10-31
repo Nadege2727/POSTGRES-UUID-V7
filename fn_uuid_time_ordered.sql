@@ -1,12 +1,11 @@
 
 /**
- * Returns a time-ordered UUID (v6).
+ * Returns a time-ordered UUID (UUIDv6).
  * 
  * Tags: uuid guid uuid-generator guid-generator generator time order rfc4122 rfc-4122
  */
 create or replace function fn_uuid_time_ordered() returns uuid as $$
 declare
-
 	v_time timestamp with time zone:= null;
 	v_secs bigint := null;
 	v_usec bigint := null;
