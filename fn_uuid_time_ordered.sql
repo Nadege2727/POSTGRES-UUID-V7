@@ -6,36 +6,39 @@
  */
 create or replace function fn_uuid_time_ordered() returns uuid as $$
 declare
+
 	v_time timestamp with time zone:= null;
 	v_secs bigint := null;
 	v_usec bigint := null;
+
 	v_timestamp bigint := null;
 	v_timestamp_hex varchar := null;
-	v_bytes  bytea;
 
-	c_greg bigint :=  -12219292800; -- Gragorian epoch: '1582-10-15 00:00:00'
+	v_clkseq_and_nodeid bigint := null;
+	v_clkseq_and_nodeid_hex varchar := null;
+
+	v_bytes bytea;
+
+	c_epoch bigint := -12219292800; -- RFC-4122 epoch: '1582-10-15 00:00:00'
+	c_variant bit(64):= x'8000000000000000'; -- RFC-4122 variant: b'10xx...'
 begin
 
-	-- Get time and random values
+	-- Get seconds and micros
 	v_time := clock_timestamp();
-
-	-- Extract seconds and microseconds
 	v_secs := EXTRACT(EPOCH FROM v_time);
 	v_usec := mod(EXTRACT(MICROSECONDS FROM v_time)::numeric, 10^6::numeric);
 
-	-- Calculate the timestamp
-	v_timestamp := (((v_secs - c_greg) * 10^6) + v_usec) * 10;
-
-	-- Generate timestamp hexadecimal (and set version number: 6)
+	-- Generate timestamp hexadecimal (and set version 6)
+	v_timestamp := (((v_secs - c_epoch) * 10^6) + v_usec) * 10;
 	v_timestamp_hex := lpad(to_hex(v_timestamp), 16, '0');
 	v_timestamp_hex := substr(v_timestamp_hex, 2, 12) || '6' || substr(v_timestamp_hex, 14, 3);
 
-	-- Concat timestemp hex with random hex to generate a byte array
-	v_bytes := decode(substr(v_timestamp_hex || md5(random()::text), 1, 32), 'hex');
+	-- Generate clock sequence and node identifier hexadecimal (and set variant b'10xx')
+	v_clkseq_and_nodeid := ((random()::numeric * 2^62::numeric)::bigint::bit(64) | c_variant)::bigint;
+	v_clkseq_and_nodeid_hex := lpad(to_hex(v_clkseq_and_nodeid), 16, '0');
 
-	-- Set variant bits (10xx)
-	v_bytes := set_bit(v_bytes, 71, 1);
-	v_bytes := set_bit(v_bytes, 70, 0);
+	-- Concat timestemp, clock sequence and node identifier hexadecimal
+	v_bytes := decode(v_timestamp_hex || v_clkseq_and_nodeid_hex, 'hex');
 
 	return encode(v_bytes, 'hex')::uuid;
 	
@@ -49,5 +52,5 @@ end $$ language plpgsql;
 -- 
 -- |uuid                                  |time_taken        |
 -- |--------------------------------------|------------------|
--- |1ec4c81e-ac69-61e0-8021-798ee3338c84  |00:00:00.000243   |
+-- |1ed58ca7-060a-62a0-aa64-951dd4e5bb8a  |00:00:00.000104   |
 
