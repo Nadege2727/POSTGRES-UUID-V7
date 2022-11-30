@@ -1,4 +1,5 @@
 
+
 /**
  * Returns a time-ordered UUID (UUIDv6).
  * 
@@ -52,4 +53,13 @@ end $$ language plpgsql;
 -- |uuid                                  |time_taken        |
 -- |--------------------------------------|------------------|
 -- |1ed58ca7-060a-62a0-aa64-951dd4e5bb8a  |00:00:00.000104   |
+
+-------------------------------------------------------------------
+-- FOR TEST: the expected result is an empty result set
+-------------------------------------------------------------------
+-- with t as (
+--     select fn_uuid_time_ordered() as id from generate_series(1, 1000)
+-- )
+-- select * from t where (id is null or not id::varchar ~ '^[a-f0-9]{8}-[a-f0-9]{4}-6[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$');
+
 
