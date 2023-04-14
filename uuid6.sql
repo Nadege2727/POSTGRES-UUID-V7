@@ -3,7 +3,7 @@
  * 
  * Tags: uuid guid uuid-generator guid-generator generator time order rfc4122 rfc-4122
  */
-create or replace function fn_uuid_time_ordered() returns uuid as $$
+create or replace function uuid6() returns uuid as $$
 declare
 	v_time timestamp with time zone:= null;
 	v_secs bigint := null;
@@ -44,7 +44,7 @@ end $$ language plpgsql;
 
 -- EXAMPLE:
 -- 
--- select fn_uuid_time_ordered() uuid, clock_timestamp()-statement_timestamp() time_taken;
+-- select uuid6() uuid, clock_timestamp()-statement_timestamp() time_taken;
 
 -- EXAMPLE OUTPUT:
 -- 
@@ -56,7 +56,7 @@ end $$ language plpgsql;
 -- FOR TEST: the expected result is an empty result set
 -------------------------------------------------------------------
 -- with t as (
---     select fn_uuid_time_ordered() as id from generate_series(1, 1000)
+--     select uuid6() as id from generate_series(1, 1000)
 -- )
 -- select * from t
 -- where (id is null or id::text !~ '^[a-f0-9]{8}-[a-f0-9]{4}-6[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$');
