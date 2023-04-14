@@ -11,6 +11,7 @@ create or replace function uuid7() returns uuid as $$
 declare
 	v_time timestamp with time zone:= null;
 	v_secs bigint := null;
+	v_msec bigint := null;
 	v_usec bigint := null;
 
 	v_timestamp bigint := null;
@@ -27,10 +28,11 @@ begin
 	-- Get seconds and micros
 	v_time := clock_timestamp();
 	v_secs := EXTRACT(EPOCH FROM v_time);
-	v_usec := mod(EXTRACT(MICROSECONDS FROM v_time)::numeric, 10^6::numeric);
+	v_msec := mod(EXTRACT(MILLISECONDS FROM v_time)::numeric, 10^3::numeric);
+	v_usec := mod(EXTRACT(MICROSECONDS FROM v_time)::numeric, 10^3::numeric);
 
 	-- Generate timestamp hexadecimal (and set version 7)
-	v_timestamp := ((v_secs * 10^6) + v_usec) * 10;
+	v_timestamp := (((v_secs * 10^3) + v_msec)::bigint << 12) | (v_usec << 2);
 	v_timestamp_hex := lpad(to_hex(v_timestamp), 16, '0');
 	v_timestamp_hex := substr(v_timestamp_hex, 2, 12) || '7' || substr(v_timestamp_hex, 14, 3);
 
@@ -53,7 +55,7 @@ end $$ language plpgsql;
 -- 
 -- |uuid                                  |time_taken        |
 -- |--------------------------------------|------------------|
--- |03bbc855-0195-7dca-9cf5-c4e66abbc1a2  |00:00:00.000062   |
+-- |01878208-432f-7f04-8a23-345dade2b96b  |00:00:00.000062   |
 
 -------------------------------------------------------------------
 -- FOR TEST: the expected result is an empty result set
