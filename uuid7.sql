@@ -1,6 +1,10 @@
 /**
  * Returns a time-ordered with Unix Epoch UUID (UUIDv7).
  * 
+ * Referencies:
+ * - https://github.com/uuid6/uuid6-ietf-draft
+ * - https://github.com/ietf-wg-uuidrev/rfc4122bis
+ *
  * Tags: uuid guid uuid-generator guid-generator generator time order rfc4122 rfc-4122
  */
 create or replace function uuid7() returns uuid as $$
