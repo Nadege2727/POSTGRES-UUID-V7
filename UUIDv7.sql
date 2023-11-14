@@ -37,7 +37,6 @@ create or replace function uuid7() returns uuid as $$
 declare
 	v_time timestamp with time zone:= null;
 	v_secs bigint := null;
-	v_msec bigint := null;
 	v_usec bigint := null;
 
 	v_timestamp bigint := null;
@@ -54,11 +53,10 @@ begin
 	-- Get seconds and micros
 	v_time := clock_timestamp();
 	v_secs := EXTRACT(EPOCH FROM v_time);
-	v_msec := mod(EXTRACT(MILLISECONDS FROM v_time)::numeric, 10^3::numeric);
-	v_usec := mod(EXTRACT(MICROSECONDS FROM v_time)::numeric, 10^3::numeric);
+	v_usec := mod(EXTRACT(MICROSECONDS FROM v_time)::numeric, 10^6::numeric);
 
 	-- Generate timestamp hexadecimal (and set version 7)
-	v_timestamp := (((v_secs * 10^3) + v_msec)::bigint << 12) | (v_usec << 2);
+	v_timestamp := (((v_secs * 1000) + div(v_usec, 1000))::bigint << 12) | (mod(v_usec, 1000) << 2);
 	v_timestamp_hex := lpad(to_hex(v_timestamp), 16, '0');
 	v_timestamp_hex := substr(v_timestamp_hex, 2, 12) || '7' || substr(v_timestamp_hex, 14, 3);
 
