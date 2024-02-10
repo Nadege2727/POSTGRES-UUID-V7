@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2023 Fabio Lima
+ * Copyright (c) 2023-2024 Fabio Lima
  * 
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -53,8 +53,8 @@ begin
 
 	-- Get seconds and micros
 	v_time := clock_timestamp();
-	v_secs := EXTRACT(EPOCH FROM v_time);
-	v_usec := mod(EXTRACT(MICROSECONDS FROM v_time)::numeric, 10^6::numeric);
+	v_secs := EXTRACT(EPOCH FROM v_time)::bigint;
+	v_usec := mod(EXTRACT(MICROSECONDS FROM v_time)::numeric, 10^6::numeric)::bigint;
 
 	-- Generate timestamp hexadecimal (and set version 6)
 	v_timestamp := (((v_secs - c_epoch) * 10^6) + v_usec) * 10;
