@@ -53,7 +53,7 @@ begin
 
 	-- Get seconds and micros
 	v_time := clock_timestamp();
-	v_secs := EXTRACT(EPOCH FROM v_time)::bigint;
+	v_secs := trunc(EXTRACT(EPOCH FROM v_time))::bigint;
 	v_usec := mod(EXTRACT(MICROSECONDS FROM v_time)::numeric, 10^6::numeric)::bigint;
 
 	-- Generate timestamp hexadecimal (and set version 6)
