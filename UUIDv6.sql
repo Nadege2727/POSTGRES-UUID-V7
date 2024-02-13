@@ -35,59 +35,84 @@
  */
 create or replace function uuid6() returns uuid as $$
 declare
-	v_time timestamp with time zone:= null;
-	v_secs bigint := null;
-	v_usec bigint := null;
+begin
+	return uuid6(clock_timestamp());
+end $$ language plpgsql;
 
-	v_timestamp bigint := null;
-	v_timestamp_hex varchar := null;
+create or replace function uuid6(p_timestamp timestamp with time zone) returns uuid as $$
+declare
 
-	v_clkseq_and_nodeid bigint := null;
-	v_clkseq_and_nodeid_hex varchar := null;
+	v_time numeric := null;
 
-	v_bytes bytea;
+	v_gregorian_t numeric := null;
+	v_clock_sequence_and_node numeric := null;
 
-	c_epoch bigint := -12219292800; -- RFC-4122 epoch: '1582-10-15 00:00:00'
-	c_variant bit(64):= x'8000000000000000'; -- RFC-4122 variant: b'10xx...'
+	v_gregorian_t_hex_a varchar := null;
+	v_gregorian_t_hex_b varchar := null;
+	v_clock_sequence_and_node_hex varchar := null;
+
+	v_output_bytes bytea := null;
+
+	c_100ns_factor numeric := 10^7::numeric;
+	
+	c_epoch numeric := -12219292800::numeric; -- RFC-4122 epoch: '1582-10-15'
+	c_version bit(64) := x'0000000000006000'; -- RFC-4122 version: b'0110...'
+	c_variant bit(64) := x'8000000000000000'; -- RFC-4122 variant: b'10xx...'
+
 begin
 
-	-- Get seconds and micros
-	v_time := clock_timestamp();
-	v_secs := trunc(EXTRACT(EPOCH FROM v_time))::bigint;
-	v_usec := mod(EXTRACT(MICROSECONDS FROM v_time)::numeric, 10^6::numeric)::bigint;
+	v_time := extract(epoch from p_timestamp);
 
-	-- Generate timestamp hexadecimal (and set version 6)
-	v_timestamp := (((v_secs - c_epoch) * 10^6) + v_usec) * 10;
-	v_timestamp_hex := lpad(to_hex(v_timestamp), 16, '0');
-	v_timestamp_hex := substr(v_timestamp_hex, 2, 12) || '6' || substr(v_timestamp_hex, 14, 3);
+	v_gregorian_t := (v_time - c_epoch) * c_100ns_factor;
+	v_clock_sequence_and_node := random()::numeric * 2^62::numeric;
 
-	-- Generate clock sequence and node identifier hexadecimal (and set variant b'10xx')
-	v_clkseq_and_nodeid := ((random()::numeric * 2^62::numeric)::bigint::bit(64) | c_variant)::bigint;
-	v_clkseq_and_nodeid_hex := lpad(to_hex(v_clkseq_and_nodeid), 16, '0');
+	v_gregorian_t_hex_a := lpad(to_hex((div(v_gregorian_t, 2^12::numeric)::bigint)), 12, '0');
+	v_gregorian_t_hex_b := lpad(to_hex((mod(v_gregorian_t, 2^12::numeric)::bigint::bit(64) | c_version)::bigint), 4, '0');
+	v_clock_sequence_and_node_hex := lpad(to_hex((v_clock_sequence_and_node::bigint::bit(64) | c_variant)::bigint), 16, '0');
 
-	-- Concat timestemp, clock sequence and node identifier hexadecimal
-	v_bytes := decode(v_timestamp_hex || v_clkseq_and_nodeid_hex, 'hex');
+	v_output_bytes := decode(v_gregorian_t_hex_a || v_gregorian_t_hex_b  || v_clock_sequence_and_node_hex, 'hex');
 
-	return encode(v_bytes, 'hex')::uuid;
+	return encode(v_output_bytes, 'hex')::uuid;
 	
 end $$ language plpgsql;
 
+-------------------------------------------------------------------
 -- EXAMPLE:
+-------------------------------------------------------------------
 -- 
 -- select uuid6() uuid, clock_timestamp()-statement_timestamp() time_taken;
-
--- EXAMPLE OUTPUT:
--- 
+--
 -- |uuid                                  |time_taken        |
 -- |--------------------------------------|------------------|
--- |1ed58ca7-060a-62a0-aa64-951dd4e5bb8a  |00:00:00.000104   |
+-- |1eeca632-cf2a-65e0-85f3-151064c2409d  |00:00:00.000108   |
+-- 
+
+-------------------------------------------------------------------
+-- EXAMPLE: generate a list
+-------------------------------------------------------------------
+-- 
+-- with x as (select clock_timestamp() as t from generate_series(1, 10))
+-- select uuid6(x.t) uuid, x.t::text ts from x;
+-- 
+-- |uuid                                |ts                           |
+-- |------------------------------------|-----------------------------|
+-- |1eeca634-f783-63f0-9988-48906d79f782|2024-02-13 08:30:37.891480-03|
+-- |1eeca634-f783-6c24-97af-605238f4c3d0|2024-02-13 08:30:37.891691-03|
+-- |1eeca634-f783-6e7c-9c2e-624f24b87738|2024-02-13 08:30:37.891754-03|
+-- |1eeca634-f784-6070-a67b-4fc6659143e7|2024-02-13 08:30:37.891800-03|
+-- |1eeca634-f784-6200-befd-0e20be5b0087|2024-02-13 08:30:37.891842-03|
+-- |1eeca634-f784-6390-8f79-d4dacec1c3e0|2024-02-13 08:30:37.891881-03|
+-- |1eeca634-f784-6520-8ee7-96091b017d4c|2024-02-13 08:30:37.891920-03|
+-- |1eeca634-f784-66b0-a63e-c285d8a63e21|2024-02-13 08:30:37.891958-03|
+-- |1eeca634-f784-6840-8c00-38659c4bf807|2024-02-13 08:30:37.891997-03|
+-- |1eeca634-f784-69d0-b775-4bbfd45eb99e|2024-02-13 08:30:37.892036-03|
+-- 
 
 -------------------------------------------------------------------
 -- FOR TEST: the expected result is an empty result set
 -------------------------------------------------------------------
--- with t as (
---     select uuid6() as id from generate_series(1, 1000)
--- )
--- select * from t
--- where (id is null or id::text !~ '^[a-f0-9]{8}-[a-f0-9]{4}-6[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$');
+-- 
+-- with t as (select uuid6() as id from generate_series(1, 1000))
+-- select * from t where (id is null or id::text !~ '^[a-f0-9]{8}-[a-f0-9]{4}-6[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$');
+--
 
